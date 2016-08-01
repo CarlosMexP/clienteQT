@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtNetwork>
+#include <QTcpSocket>
 #include <QDebug>
 #include <QMessageBox>
 
@@ -16,12 +17,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)),
 //! [3]
             this, SLOT(displayError(QAbstractSocket::SocketError)));
-    ui->pushButtonVerPaneles->setDefault(true);
-    ui->pushButtonVerPaneles->setEnabled(true);
-    ui->pushButtonAbrePuerta->setEnabled(false);
-    ui->pushButtonCierraPuerta->setEnabled(false);
-    ui->lineEditHost->setText("192.168.1.14");
-    ui->lineEditPuerto->setText("6010");
+
+    connect(ui->pushButtonHello,SIGNAL(clicked(bool)),this,SLOT(sendHello()));
+
+    ui->pushButtonHello->setEnabled(true);
+    ui->lineEditHost->setText("192.168.0.27");
+    ui->lineEditPuerto->setText("6001");
 
 /*    // find out name of this machine
     QString name = QHostInfo::localHostName();
@@ -65,7 +66,6 @@ MainWindow::MainWindow(QWidget *parent) :
         networkSession = new QNetworkSession(config, this);
         connect(networkSession, SIGNAL(opened()), this, SLOT(sessionOpened()));
 
-        ui->pushButtonVerPaneles->setEnabled(false);
         //statusLabel->setText(tr("Opening network session."));
         networkSession->open();
     }
@@ -74,18 +74,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-void MainWindow::solicitaListaPaneles()
+void MainWindow::send(QString message)
 {
-    ui->pushButtonVerPaneles->setEnabled(false);
-    blockSize = 0;
     tcpSocket->abort();
-//! [7]
-    tcpSocket->connectToHost("192.168.0.158",6010);
-    qDebug() << "CONECTANDO";
-    int numBytes = tcpSocket->write("LISTA DE PANELES");
- //   tcpSocket->flush();
-    qDebug() << "Num de bytes escritos "<< numBytes;
-//! [7]
+    QString hostName = ui->lineEditHost->text();
+    int port = ui->lineEditPuerto->text().toInt(NULL,10);
+    tcpSocket->connectToHost(hostName,port);
+    qDebug() << "CONNECTED";
+    int numBytes = tcpSocket->write(QByteArray::fromStdString(message.toStdString()));
+    qDebug() << "Num de written bytes: "<< numBytes;
+}
+
+void MainWindow::sendHello()
+{
+    send("HELLO");
 }
 
 void MainWindow::displayError(QAbstractSocket::SocketError socketError)
@@ -94,66 +96,32 @@ void MainWindow::displayError(QAbstractSocket::SocketError socketError)
     case QAbstractSocket::RemoteHostClosedError:
         break;
     case QAbstractSocket::HostNotFoundError:
-        QMessageBox::information(this, tr("Atención"),
+        QMessageBox::information(this, tr("Warning"),
                                  tr("The host was not found. Please check the "
                                     "host name and port settings."));
         break;
     case QAbstractSocket::ConnectionRefusedError:
-        QMessageBox::information(this, tr("Atención"),
+        QMessageBox::information(this, tr("Warning"),
                                  tr("The connection was refused by the peer. "
-                                    "Make sure the fortune server is running, "
+                                    "Make sure the server is running, "
                                     "and check that the host name and port "
                                     "settings are correct."));
         break;
     default:
-        QMessageBox::information(this, tr("Atención"),
+        QMessageBox::information(this, tr("Warning"),
                                  tr("The following error occurred: %1.")
                                  .arg(tcpSocket->errorString()));
     }
 
-    ui->pushButtonVerPaneles->setEnabled(true);
-}
-void MainWindow::readFortune()
-{
-//! [9]
-    QDataStream in(tcpSocket);
-    in.setVersion(QDataStream::Qt_4_0);
-
-    if (blockSize == 0) {
-        if (tcpSocket->bytesAvailable() < (int)sizeof(quint16))
-            return;
-//! [8]
-
-//! [10]
-        in >> blockSize;
-    }
-
-    if (tcpSocket->bytesAvailable() < blockSize)
-        return;
-//! [10] //! [11]
-
-    QString nextFortune;
-    in >> nextFortune;
-
-    if (nextFortune == currentFortune) {
-        QTimer::singleShot(0, this, SLOT(solicitaListaPaneles()));
-        return;
-    }
-//! [11]
-
-//! [12]
-    currentFortune = nextFortune;
-//! [9]
-    ui->listWidgetPaneles->addItem(currentFortune);
-    ui->pushButtonVerPaneles->setEnabled(true);
-
-
 }
 
-void MainWindow::enableGetFortuneButton()
-{
-    ui->pushButtonVerPaneles->setEnabled((!networkSession || networkSession->isOpen()));
 
+void MainWindow::enableButtons()
+{
+    if (!networkSession || networkSession->isOpen())
+    {
+        ui->pushButtonHello->setEnabled(true);
+    }
 }
 
 void MainWindow::sessionOpened()
@@ -170,11 +138,7 @@ void MainWindow::sessionOpened()
     settings.beginGroup(QLatin1String("QtNetwork"));
     settings.setValue(QLatin1String("DefaultNetworkConfiguration"), id);
     settings.endGroup();
-
- //   statusLabel->setText(tr("This examples requires that you run the "
-                //            "Fortune Server example as well."));
-
-    enableGetFortuneButton();
+    enableButtons();
 }
 
 MainWindow::~MainWindow()
@@ -182,11 +146,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-void MainWindow::on_pushButtonVerPaneles_clicked()
-{
-    this->solicitaListaPaneles();
-}
 
 void MainWindow::on_pushButtonQuit_clicked()
 {
@@ -200,47 +159,17 @@ void MainWindow::readServerResponse()
     response.append(trama);
     //Divide una cadena en líneas
     QStringList lines = response.split( "\n", QString::SkipEmptyParts );
-    ui->listWidgetPaneles->clear();
+    /*ui->listWidgetConsole->clear();
     foreach (response, lines) {
         response =response.trimmed();
         qDebug() << response;
-            ui->listWidgetPaneles->addItem(response);
-    }
+            ui->listWidgetConsole->addItem(response);
+    }*/
+    ui->listWidgetConsole->addItem(trama);
+    ui->listWidgetConsole->scrollToBottom();
 }
 
-void MainWindow::on_pushButtonAbrePuerta_clicked()
-{
-     tcpSocket->abort();
-    tcpSocket->connectToHost("192.168.0.158",6010);
-    qDebug() << "ENVIANDO COMANDO ABRE";
-    QString nombrePanelSeleccionado =
-            ui->listWidgetPaneles->selectedItems().first()->text();
-    //nombrePanelSeleccionado
-    QByteArray nPanelSel;
-    nPanelSel.append("ABRE,"+nombrePanelSeleccionado);
-    int numBytes = tcpSocket->write((const char *) nPanelSel);
-    qDebug() << "abriendo Puerta en Panel "<< nPanelSel;
-    tcpSocket->close();
 
-}
-
-void MainWindow::on_pushButtonCierraPuerta_clicked()
+void MainWindow::on_listWidgetConsole_itemClicked(QListWidgetItem *item)
 {
-    tcpSocket->abort();
-   tcpSocket->connectToHost("192.168.0.158",6010);
-   qDebug() << "ENVIANDO COMANDO CIERRA";
-   QString nombrePanelSeleccionado =
-           ui->listWidgetPaneles->selectedItems().first()->text();
-   //nombrePanelSeleccionado
-   QByteArray nPanelSel;
-   nPanelSel.append("CIERRA,"+nombrePanelSeleccionado);
-   int numBytes = tcpSocket->write((const char *) nPanelSel);
-   qDebug() << "abriendo Puerta en Panel "<< nPanelSel;
-   tcpSocket->close();
-}
-
-void MainWindow::on_listWidgetPaneles_itemClicked(QListWidgetItem *item)
-{
-    ui->pushButtonAbrePuerta->setEnabled(true);
-    ui->pushButtonCierraPuerta->setEnabled(true);
 }

@@ -25,21 +25,14 @@ public:
     ~MainWindow();
 
 private slots:
-    void solicitaListaPaneles();
-    void on_pushButtonVerPaneles_clicked();
-    void readFortune();
+    void send(QString message);
+    void sendHello();
     void readServerResponse();
-    void enableGetFortuneButton();
+    void enableButtons();
     void sessionOpened();
     void displayError(QAbstractSocket::SocketError socketError);
-
     void on_pushButtonQuit_clicked();
-
-    void on_pushButtonAbrePuerta_clicked();
-
-    void on_pushButtonCierraPuerta_clicked();
-
-    void on_listWidgetPaneles_itemClicked(QListWidgetItem *item);
+    void on_listWidgetConsole_itemClicked(QListWidgetItem *item);
 
 private:
     Ui::MainWindow *ui;
