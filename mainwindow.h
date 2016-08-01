@@ -5,11 +5,7 @@
 #include <QTcpSocket>
 #include <QDialog>
 #include <QListWidgetItem>
-QT_BEGIN_NAMESPACE
-class QTcpSocket;
-class QNetworkSession;
-QT_END_NAMESPACE
-
+#include "tcpclient.h"
 
 namespace Ui {
 class MainWindow;
@@ -25,22 +21,13 @@ public:
     ~MainWindow();
 
 private slots:
-    void send(QString message);
-    void sendHello();
-    void readServerResponse();
-    void enableButtons();
-    void sessionOpened();
-    void displayError(QAbstractSocket::SocketError socketError);
+    void log(const QString &msg);
     void on_pushButtonQuit_clicked();
-    void on_listWidgetConsole_itemClicked(QListWidgetItem *item);
-
+    void hostNameEdited();
+    void portEdited();
 private:
     Ui::MainWindow *ui;
-    QTcpSocket *tcpSocket;
-    QString currentFortune;
-    quint16 blockSize;
-
-    QNetworkSession *networkSession;
+    TcpClient _client;
 };
 
 #endif // MAINWINDOW_H

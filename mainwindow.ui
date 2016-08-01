@@ -67,7 +67,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEditPuerto">
+      <widget class="QLineEdit" name="lineEditPort">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>

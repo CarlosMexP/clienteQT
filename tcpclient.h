@@ -21,6 +21,8 @@ signals:
     void log(const QString &msg);
 
 public slots:
+    void setHostName(QString hostName);
+    void setPort(int port);
 
 private slots:
     void send(QString message);
@@ -31,6 +33,8 @@ private slots:
 private:
     QTcpSocket *tcpSocket;
     QNetworkSession *networkSession;
+    QString _hostName;
+    int _port;
 };
 
 #endif // TCPCLIENT_H
