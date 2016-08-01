@@ -1,9 +1,15 @@
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 
-#include <QObject>
 #include <QTcpSocket>
-#include <QtNetwork>
+#include <QDialog>
+#include <QListWidgetItem>
+
+QT_BEGIN_NAMESPACE
+class QTcpSocket;
+class QNetworkSession;
+QT_END_NAMESPACE
+
 
 class TcpClient : public QObject
 {
@@ -20,6 +26,7 @@ private slots:
     void send(QString message);
     void sendHello();
     void readServerResponse();
+//    void displayError(QAbstractSocket::SocketError socketError);
 
 private:
     QTcpSocket *tcpSocket;
