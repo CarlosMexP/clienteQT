@@ -23,10 +23,9 @@ signals:
 public slots:
     void setHostName(QString hostName);
     void setPort(int port);
+    void send(QString message);
 
 private slots:
-    void send(QString message);
-    void sendHello();
     void readServerResponse();
 //    void displayError(QAbstractSocket::SocketError socketError);
 

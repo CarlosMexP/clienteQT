@@ -25,6 +25,9 @@ private slots:
     void on_pushButtonQuit_clicked();
     void hostNameEdited();
     void portEdited();
+    void clearConsole();
+    void sendMessage();
+    void sendHello();
 private:
     Ui::MainWindow *ui;
     TcpClient _client;

@@ -33,11 +33,6 @@ void TcpClient::send(QString message)
     qDebug() << "Num de written bytes: "<< numBytes;
 }
 
-void TcpClient::sendHello()
-{
-    send("HELLO");
-}
-
 void TcpClient::readServerResponse()
 {
     QByteArray trama = tcpSocket->readAll();
